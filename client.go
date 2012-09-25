@@ -1,9 +1,9 @@
 package main
 
 import (
-    "fmt"
     "bytes"
     "github.com/ugorji/go-msgpack"
+    "github.com/alecthomas/gozmq"
 )
 
 type Request struct {
@@ -19,11 +19,10 @@ type Response struct {
 
 func packRequest(r *Request) (*bytes.Buffer) {
     buffer := new(bytes.Buffer)
-    enc := msgpack.NewEncoder(bbuffer)
+    enc := msgpack.NewEncoder(buffer)
     enc.Encode(r)
 
     return buffer
 }
-
 func main() {
 }
