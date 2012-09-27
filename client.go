@@ -2,16 +2,16 @@ package main
 
 import (
     "fmt"
-    "log"
+    // "log"
     "bytes"
     "github.com/ugorji/go-msgpack"
     zmq "github.com/alecthomas/gozmq"
 )
 
 type Request struct {
-    db_uid      string
-    command string
-    args         []string
+    Db string
+    Command string
+    Args []string
 }
 
 type Response struct {
@@ -20,34 +20,42 @@ type Response struct {
 }
 
 func packRequest(r *Request) (*bytes.Buffer) {
-    buffer := new(bytes.Buffer)
+    buffer := &bytes.Buffer{}
+    fmt.Println(buffer)
     enc := msgpack.NewEncoder(buffer)
     enc.Encode(r)
 
     return buffer
 }
 
+func unpackResponse(r []byte) {
+    buffer := new(bytes.Buffer)
+    dec := msgpack.NewDecoder(buffer, nil)
+    err := dec.Decode(r[0])
+    if err != nil {
+        fmt.Println(err.Error())
+    }
+}
+
 func newMessage(r *Request) ([][]byte) {
     var preq *bytes.Buffer = packRequest(r)
     var breq byte
 
-    breq, err := preq.ReadByte()
+    err := preq.WriteByte(breq)
     if err != nil {
-        log.Fatal(err)
+        fmt.Println(err.Error())
     }
 
     fmt.Println(breq)
-
     return [][]byte{[]byte{breq}}
 }
 
 func send(s zmq.Socket, r *Request) ([][]byte) {
     msg := newMessage(r)
     err := s.SendMultipart(msg, 0)
-    
-    fmt.Println(msg)
+
     if err != nil {
-        log.Fatal(err)
+        fmt.Println(err.Error())
     }
 
     parts, _ := s.RecvMultipart(0)
@@ -57,9 +65,9 @@ func send(s zmq.Socket, r *Request) ([][]byte) {
 
 func main() {
     req := &Request{
-        db_uid: "a9032698-12f8-45a6-ab3e-0e00915ed700",
-        command: "GET",
-        args: []string{"1"},
+        Db: "a9032698-12f8-45a6-ab3e-0e00915ed700",
+        Command: "GET",
+        Args: []string{"1"},
     }
 
     context, _ := zmq.NewContext()
@@ -67,6 +75,5 @@ func main() {
     socket, _ := context.NewSocket(zmq.XREQ)
     socket.Connect("tcp://127.0.0.1:4141")
 
-    res := send(socket, req)
-    fmt.Println(res)
+    send(socket, req)
 }
