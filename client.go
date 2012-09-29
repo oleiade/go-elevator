@@ -14,26 +14,25 @@ type Request struct {
 }
 
 type Response struct {
-    status       int        `msgpack:"STATUS"`
-    datas        []string   `msgpack:"DATAS"`
+    Status       int        `msgpack:"STATUS"`
+    Datas        []string   `msgpack:"DATAS"`
 }
 
 func packRequest(r *Request) (*bytes.Buffer) {
     buffer := &bytes.Buffer{}
-    fmt.Println(buffer)
     enc := msgpack.NewEncoder(buffer)
     enc.Encode(r)
 
     return buffer
 }
 
-func unpackResponse(r []byte) {
-    buffer := new(bytes.Buffer)
-    dec := msgpack.NewDecoder(buffer, nil)
-    err := dec.Decode(r[0])
-    if err != nil {
-        fmt.Println(err.Error())
-    }
+func unpackResponse(parts [][]byte) (*Response, error) {
+    response := new(Response)
+    msg := parts[0]
+    dec := msgpack.NewDecoder(bytes.NewBuffer(msg), nil)
+    err := dec.Decode(response)
+
+    return response, err
 }
 
 func newMessage(r *Request) ([][]byte) {
@@ -43,17 +42,21 @@ func newMessage(r *Request) ([][]byte) {
     return parts
 }
 
-func send(s zmq.Socket, r *Request) ([][]byte) {
+func send(s zmq.Socket, r *Request) (*Response) {
     msg := newMessage(r)
     err := s.SendMultipart(msg, 0)
-
+    
     if err != nil {
         fmt.Println(err.Error())
     }
 
     parts, _ := s.RecvMultipart(0)
+    response, err := unpackResponse(parts)
+    if err != nil {
+        fmt.Println(err.Error())
+    }
 
-    return parts
+    return response
 }
 
 func main() {
@@ -68,5 +71,6 @@ func main() {
     socket, _ := context.NewSocket(zmq.XREQ)
     socket.Connect("tcp://127.0.0.1:4141")
 
-    send(socket, req)
+    response := send(socket, req)
+    fmt.Println(response)
 }
