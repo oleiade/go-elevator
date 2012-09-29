@@ -2,21 +2,20 @@ package main
 
 import (
     "fmt"
-    // "log"
     "bytes"
     "github.com/ugorji/go-msgpack"
     zmq "github.com/alecthomas/gozmq"
 )
 
 type Request struct {
-    Db string
-    Command string
-    Args []string
+    Db          string      `msgpack:"DB_UID"`
+    Command     string      `msgpack:"COMMAND"`
+    Args        []string    `msgpack:"ARGS"`
 }
 
 type Response struct {
-    status       int
-    content     []string
+    status       int        `msgpack:"STATUS"`
+    datas        []string   `msgpack:"DATAS"`
 }
 
 func packRequest(r *Request) (*bytes.Buffer) {
@@ -39,15 +38,9 @@ func unpackResponse(r []byte) {
 
 func newMessage(r *Request) ([][]byte) {
     var preq *bytes.Buffer = packRequest(r)
-    var breq byte
+    var parts = [][]byte{preq.Bytes()}
 
-    err := preq.WriteByte(breq)
-    if err != nil {
-        fmt.Println(err.Error())
-    }
-
-    fmt.Println(breq)
-    return [][]byte{[]byte{breq}}
+    return parts
 }
 
 func send(s zmq.Socket, r *Request) ([][]byte) {
