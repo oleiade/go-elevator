@@ -18,6 +18,22 @@ type Response struct {
     Datas        []string   `msgpack:"DATAS"`
 }
 
+type Elevator struct {
+    Socket      zmq.Socket
+}
+
+func NewElevator(endpoint string) (*Elevator) {
+    elevator := new(Elevator)
+    
+    context, _ := zmq.NewContext()
+    socket, _ := context.NewSocket(zmq.XREQ)
+    socket.Connect("tcp://127.0.0.1:4141")
+
+    elevator.Socket = socket
+
+    return elevator
+}
+
 func packRequest(r *Request) (*bytes.Buffer) {
     buffer := &bytes.Buffer{}
     enc := msgpack.NewEncoder(buffer)
@@ -42,15 +58,15 @@ func newMessage(r *Request) ([][]byte) {
     return parts
 }
 
-func send(s zmq.Socket, r *Request) (*Response) {
+func (e Elevator) send(r *Request) (*Response) {
     msg := newMessage(r)
-    err := s.SendMultipart(msg, 0)
+    err := e.Socket.SendMultipart(msg, 0)
     
     if err != nil {
         fmt.Println(err.Error())
     }
 
-    parts, _ := s.RecvMultipart(0)
+    parts, _ := e.Socket.RecvMultipart(0)
     response, err := unpackResponse(parts)
     if err != nil {
         fmt.Println(err.Error())
@@ -66,11 +82,11 @@ func main() {
         Args: []string{"1"},
     }
 
-    context, _ := zmq.NewContext()
-    defer context.Close()
-    socket, _ := context.NewSocket(zmq.XREQ)
-    socket.Connect("tcp://127.0.0.1:4141")
-
-    response := send(socket, req)
+    elevator := NewElevator("tcp://127.0.0.1:4141")
+    response := elevator.send(req)
     fmt.Println(response)
+    resp2 := elevator.send(req)
+    fmt.Println(resp2)
+    // response := send(socket, req)
+    // fmt.Println(response)
 }
