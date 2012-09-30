@@ -36,30 +36,32 @@ func newMessage(r *Request) ([][]byte) {
 }
 
 
-func (e *Elevator) send(r *Request) (*Response) {
+func (e *Elevator) send(r *Request) (*Response, error) {
     // Insert elevator connector db_uid in Request
     r.Db = e.Db
 
     msg := newMessage(r)
-    err := e.Socket.SendMultipart(msg, 0)
-    
-    if err != nil {
-        fmt.Println(err.Error())
+    if err := e.Socket.SendMultipart(msg, 0); err != nil {
+        return nil, err
     }
 
     parts, _ := e.Socket.RecvMultipart(0)
     response, err := unpackResponse(parts)
     if err != nil {
-        fmt.Println(err.Error())
+        return nil, err
     }
 
-    return response
+    return response, nil
 }
 
 
 func (e *Elevator) Connect(db_name string) (error) {
     req := NewRequest("DBCONNECT", []string{db_name})
-    response := e.send(req)
+    response, err := e.send(req)
+    if err != nil {
+        fmt.Println(err)
+    }
+
     e.Db = response.Datas[0]
     return nil 
 }
@@ -67,14 +69,21 @@ func (e *Elevator) Connect(db_name string) (error) {
 
 func (e *Elevator) CreateDb(db_name string) (error) {
     req := NewRequest("DBCREATE", []string{db_name})
-    e.send(req)
+    _, err := e.send(req)
+    if err != nil {
+        fmt.Println(err)
+    }
+
     return nil
 }
 
 
 func (e *Elevator) ListDb() ([]string, error) {
     req := NewRequest("DBLIST", []string{})
-    response := e.send(req)
+    response, err := e.send(req)
+    if err != nil {
+        fmt.Println(err)
+    }
     value := response.Datas
 
     return value, nil
@@ -83,7 +92,10 @@ func (e *Elevator) ListDb() ([]string, error) {
 
 func (e *Elevator) Get(key string) (string, error) {
     req := NewRequest("GET", []string{key})
-    response := e.send(req)
+    response, err := e.send(req)
+    if err != nil {
+        fmt.Println(err)
+    }
     value := response.Datas[0]
 
     return value, nil
@@ -92,7 +104,10 @@ func (e *Elevator) Get(key string) (string, error) {
 
 func (e *Elevator) Put(key string, value string) (error) {
     req := NewRequest("PUT", []string{key, value})
-    e.send(req)
+    _, err := e.send(req)
+    if err != nil {
+        fmt.Println(err)
+    }
 
     return nil
 }
@@ -100,7 +115,10 @@ func (e *Elevator) Put(key string, value string) (error) {
 
 func (e *Elevator) Delete(key string) (error) {
     req := NewRequest("DELETE", []string{key})
-    e.send(req)
+    _, err := e.send(req)
+    if err != nil {
+        fmt.Println(err)
+    }
 
     return nil
 }
