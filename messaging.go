@@ -13,7 +13,7 @@ type Request struct {
 }
 
 type Response struct {
-    Status       int        `msgpack:"STATUS"`
+    Status       int     `msgpack:"STATUS"`
     Datas        []string   `msgpack:"DATAS"`
 }
 
@@ -33,25 +33,30 @@ func packRequest(r *Request) (*bytes.Buffer) {
 }
 
 func unpackResponse(parts [][]byte) (*Response, error) {
+    var err error
     response := new(Response)
     msg := parts[0]
     dec := msgpack.NewDecoder(bytes.NewBuffer(msg), nil)
-    err := dec.Decode(response)
+    dec.Decode(response)  // Ignore msgpack decoder errors
+
+    if response.Status == FAILURE_STATUS {
+        var msg = response.Datas[1]
+
+        err = ElevatorError{
+            Msg: msg,
+        }
+        
+        return nil, err
+    }
 
     return response, err
 }
 
-
 func main() {
     elevator := NewElevator("tcp://127.0.0.1:4141")
-    elevator.Put("2", "b")
-    val, _ := elevator.Get("2")
-    fmt.Println(val)
-    
-    err := elevator.Delete("2")
+
+    _, err := elevator.Get("42")
     if err != nil {
         fmt.Println(err)
     }
-    value, _ := elevator.ListDb()
-    fmt.Println(value)
 }

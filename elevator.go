@@ -2,7 +2,6 @@ package elevator
 
 
 import (
-	"fmt"
 	"bytes"
     zmq 		"github.com/alecthomas/gozmq"
 )
@@ -59,7 +58,7 @@ func (e *Elevator) Connect(db_name string) (error) {
     req := NewRequest("DBCONNECT", []string{db_name})
     response, err := e.send(req)
     if err != nil {
-        fmt.Println(err)
+        return err
     }
 
     e.Db = response.Datas[0]
@@ -70,11 +69,8 @@ func (e *Elevator) Connect(db_name string) (error) {
 func (e *Elevator) CreateDb(db_name string) (error) {
     req := NewRequest("DBCREATE", []string{db_name})
     _, err := e.send(req)
-    if err != nil {
-        fmt.Println(err)
-    }
 
-    return nil
+    return err
 }
 
 
@@ -82,7 +78,7 @@ func (e *Elevator) ListDb() ([]string, error) {
     req := NewRequest("DBLIST", []string{})
     response, err := e.send(req)
     if err != nil {
-        fmt.Println(err)
+        return nil, err
     }
     value := response.Datas
 
@@ -94,7 +90,7 @@ func (e *Elevator) Get(key string) (string, error) {
     req := NewRequest("GET", []string{key})
     response, err := e.send(req)
     if err != nil {
-        fmt.Println(err)
+        return "", err
     }
     value := response.Datas[0]
 
@@ -105,20 +101,14 @@ func (e *Elevator) Get(key string) (string, error) {
 func (e *Elevator) Put(key string, value string) (error) {
     req := NewRequest("PUT", []string{key, value})
     _, err := e.send(req)
-    if err != nil {
-        fmt.Println(err)
-    }
 
-    return nil
+    return err
 }
 
 
 func (e *Elevator) Delete(key string) (error) {
     req := NewRequest("DELETE", []string{key})
     _, err := e.send(req)
-    if err != nil {
-        fmt.Println(err)
-    }
 
-    return nil
+    return err
 }
