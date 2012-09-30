@@ -1,3 +1,19 @@
+// Package elevator provides a client for the Elevator
+// server.
+//
+// Usage example:
+//
+// func main() {
+//     e := elevator.NewElevator("tcp://127.0.0.1:4141")
+//
+//     value, err := e.Get("1", "3")
+//     if err != nil {
+//         fmt.Println(err)
+//         return
+//     }
+//     fmt.Println(value)
+// }
+
 package elevator
 
 import (
