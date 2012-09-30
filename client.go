@@ -20,6 +20,14 @@ type Response struct {
 
 type Elevator struct {
     Socket      zmq.Socket
+    Db          string
+}
+
+func NewRequest(command string, args []string) (*Request) {
+    return &Request{
+        Command: command,
+        Args: args,
+    }
 }
 
 func NewElevator(endpoint string) (*Elevator) {
@@ -27,9 +35,10 @@ func NewElevator(endpoint string) (*Elevator) {
     
     context, _ := zmq.NewContext()
     socket, _ := context.NewSocket(zmq.XREQ)
-    socket.Connect("tcp://127.0.0.1:4141")
+    socket.Connect(endpoint)
 
     elevator.Socket = socket
+    elevator.Connect("default")
 
     return elevator
 }
@@ -58,7 +67,10 @@ func newMessage(r *Request) ([][]byte) {
     return parts
 }
 
-func (e Elevator) send(r *Request) (*Response) {
+func (e *Elevator) send(r *Request) (*Response) {
+    // Insert elevator connector db_uid in Request
+    r.Db = e.Db
+
     msg := newMessage(r)
     err := e.Socket.SendMultipart(msg, 0)
     
@@ -75,18 +87,59 @@ func (e Elevator) send(r *Request) (*Response) {
     return response
 }
 
-func main() {
-    req := &Request{
-        Db: "a9032698-12f8-45a6-ab3e-0e00915ed700",
-        Command: "GET",
-        Args: []string{"1"},
-    }
+func (e *Elevator) Connect(db_name string) (error) {
+    req := NewRequest("DBCONNECT", []string{db_name})
+    response := e.send(req)
+    e.Db = response.Datas[0]
+    return nil 
+}
 
+func (e *Elevator) CreateDb(db_name string) (error) {
+    req := NewRequest("DBCREATE", []string{db_name})
+    e.send(req)
+    return nil
+}
+
+func (e *Elevator) ListDb() ([]string, error) {
+    req := NewRequest("DBLIST", []string{})
+    response := e.send(req)
+    value := response.Datas
+
+    return value, nil
+}
+
+func (e *Elevator) Get(key string) (string, error) {
+    req := NewRequest("GET", []string{key})
+    response := e.send(req)
+    value := response.Datas[0]
+
+    return value, nil
+}
+
+func (e *Elevator) Put(key string, value string) (error) {
+    req := NewRequest("PUT", []string{key, value})
+    e.send(req)
+
+    return nil
+}
+
+func (e *Elevator) Delete(key string) (error) {
+    req := NewRequest("DELETE", []string{key})
+    e.send(req)
+
+    return nil
+}
+
+func main() {
     elevator := NewElevator("tcp://127.0.0.1:4141")
-    response := elevator.send(req)
-    fmt.Println(response)
-    resp2 := elevator.send(req)
-    fmt.Println(resp2)
-    // response := send(socket, req)
-    // fmt.Println(response)
+    elevator.Put("2", "b")
+    val, _ := elevator.Get("2")
+    fmt.Println(val)
+    
+    err := elevator.Delete("2")
+    if err != nil {
+        fmt.Println(err)
+    }
+    value, _ := elevator.ListDb()
+    fmt.Println(value)
 }
