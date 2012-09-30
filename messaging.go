@@ -40,9 +40,10 @@ func unpackResponse(parts [][]byte) (*Response, error) {
     dec.Decode(response)  // Ignore msgpack decoder errors
 
     if response.Status == FAILURE_STATUS {
-        var msg = response.Datas[1]
+        var code, msg = response.Datas[0], response.Datas[1]
 
         err = ElevatorError{
+            Code: code,
             Msg: msg,
         }
         

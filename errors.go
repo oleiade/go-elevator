@@ -3,6 +3,7 @@ package elevator
 import "fmt"
 
 type ElevatorError struct {
+	Code	string
 	Msg 	string
 }
 

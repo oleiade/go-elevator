@@ -1,4 +1,4 @@
-package main
+package elevator
 
 // Response status codes
 const SUCCESS_STATUS = 1
