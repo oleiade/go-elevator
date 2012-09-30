@@ -1,15 +1,18 @@
 package elevator
 
+
 import (
 	"fmt"
 	"bytes"
     zmq 		"github.com/alecthomas/gozmq"
 )
 
+
 type Elevator struct {
     Socket      zmq.Socket
     Db          string
 }
+
 
 func NewElevator(endpoint string) (*Elevator) {
     elevator := new(Elevator)
@@ -24,12 +27,14 @@ func NewElevator(endpoint string) (*Elevator) {
     return elevator
 }
 
+
 func newMessage(r *Request) ([][]byte) {
     var preq *bytes.Buffer = packRequest(r)
     var parts = [][]byte{preq.Bytes()}
 
     return parts
 }
+
 
 func (e *Elevator) send(r *Request) (*Response) {
     // Insert elevator connector db_uid in Request
@@ -51,6 +56,7 @@ func (e *Elevator) send(r *Request) (*Response) {
     return response
 }
 
+
 func (e *Elevator) Connect(db_name string) (error) {
     req := NewRequest("DBCONNECT", []string{db_name})
     response := e.send(req)
@@ -58,11 +64,13 @@ func (e *Elevator) Connect(db_name string) (error) {
     return nil 
 }
 
+
 func (e *Elevator) CreateDb(db_name string) (error) {
     req := NewRequest("DBCREATE", []string{db_name})
     e.send(req)
     return nil
 }
+
 
 func (e *Elevator) ListDb() ([]string, error) {
     req := NewRequest("DBLIST", []string{})
@@ -72,6 +80,7 @@ func (e *Elevator) ListDb() ([]string, error) {
     return value, nil
 }
 
+
 func (e *Elevator) Get(key string) (string, error) {
     req := NewRequest("GET", []string{key})
     response := e.send(req)
@@ -80,12 +89,14 @@ func (e *Elevator) Get(key string) (string, error) {
     return value, nil
 }
 
+
 func (e *Elevator) Put(key string, value string) (error) {
     req := NewRequest("PUT", []string{key, value})
     e.send(req)
 
     return nil
 }
+
 
 func (e *Elevator) Delete(key string) (error) {
     req := NewRequest("DELETE", []string{key})
