@@ -2,7 +2,6 @@ package elevator
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/ugorji/go-msgpack"
 )
 
