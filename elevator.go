@@ -112,3 +112,14 @@ func (e *Elevator) Delete(key string) (error) {
 
     return err
 }
+
+func (e *Elevator) Range(key_from string, key_to string) ([]string, error) {
+    req := NewRequest("RANGE", []string{key_from, key_to})
+    response, err := e.send(req)
+    if err != nil {
+        return nil, err
+    }
+    value := response.Datas
+
+    return value, nil
+}

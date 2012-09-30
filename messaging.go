@@ -56,8 +56,9 @@ func unpackResponse(parts [][]byte) (*Response, error) {
 func main() {
     elevator := NewElevator("tcp://127.0.0.1:4141")
 
-    _, err := elevator.Get("42")
+    value, err := elevator.Range("1", "3")
     if err != nil {
         fmt.Println(err)
     }
+    fmt.Println(value)
 }
